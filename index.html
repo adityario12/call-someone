@@ -1,0 +1,425 @@
+# call-someone
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Call Someone</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #0b0d17;
+      color: #ffffff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 40px 24px;
+      overflow: hidden;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 100%;
+      max-width: 400px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* Header & Text Styling */
+    .header {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .title {
+      font-size: 14px;
+      letter-spacing: 3px;
+      color: #8a8d9b;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #f1f3f9;
+    }
+
+    .desc {
+      font-size: 14px;
+      color: #9aa0b4;
+      line-height: 1.5;
+      padding: 0 10px;
+    }
+
+    /* Avatar Animation */
+    .avatar-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: auto 0;
+    }
+
+    .avatar-glow {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(11, 13, 23, 0) 70%);
+      animation: pulse 2.5s infinite ease-in-out;
+      position: absolute;
+    }
+
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 36px;
+      z-index: 2;
+      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.5; }
+      50% { transform: scale(1.4); opacity: 0.9; }
+      100% { transform: scale(0.9); opacity: 0.5; }
+    }
+
+    /* Status Text */
+    .status-text {
+      font-size: 15px;
+      color: #a5b4fc;
+      margin-top: 20px;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    /* Controls & Buttons */
+    .controls {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 16px;
+      border-radius: 30px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-answer {
+      background: #22c55e;
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+      animation: bounce 2s infinite;
+    }
+
+    .btn-end {
+      background: #ef4444;
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-secondary {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* API Key Box */
+    .api-key-box {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .api-key-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      text-align: center;
+    }
+
+    .api-key-input::placeholder {
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1: INCOMING CALL -->
+  <div id="screen-incoming" class="screen active">
+    <div class="header">
+      <div class="title">CALL SOMEONE</div>
+      <div class="subtitle">Someone is here for you</div>
+      <div class="desc">Nggak harus punya jawaban sekarang. Kalau mau, cerita aja sebentar.</div>
+    </div>
+
+    <div class="avatar-container">
+      <div class="avatar-glow"></div>
+      <div class="avatar">🌙</div>
+    </div>
+
+    <div class="controls">
+      <div class="status-text">Someone Who Listens is calling…</div>
+      
+      <!-- API Key Field -->
+      <div class="api-key-box">
+        <input type="password" id="api-key-input" class="api-key-input" placeholder="Masukkan Gemini API Key di sini..." onchange="saveApiKey(this.value)">
+      </div>
+
+      <button class="btn-action btn-answer" onclick="answerCall()">Geser / Ketuk untuk Menjawab</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: ACTIVE CALL -->
+  <div id="screen-active" class="screen">
+    <div class="header">
+      <div class="title">IN CALL</div>
+      <div class="subtitle">Someone Who Listens</div>
+      <div id="active-status" class="status-text">Terhubung...</div>
+    </div>
+
+    <div class="avatar-container">
+      <div id="active-glow" class="avatar-glow"></div>
+      <div class="avatar">🎙️</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-action btn-end" onclick="endCall()">Akhiri Panggilan</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: END CALL -->
+  <div id="screen-end" class="screen">
+    <div class="header">
+      <div class="title">CALL ENDED</div>
+      <div class="subtitle">Makasih udah cerita</div>
+      <div class="desc">Lu nggak harus menyelesaikan semuanya malam ini. Istirahat yang cukup ya.</div>
+    </div>
+
+    <div class="avatar-container">
+      <div class="avatar" style="background: #334155;">✨</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-action btn-secondary" onclick="restartCall()">Telepon Lagi</button>
+    </div>
+  </div>
+
+  <script>
+    const SYSTEM_PROMPT = `Kamu adalah teman ngobrol yang hangat, santai, dan natural. Kamu berbicara dalam bahasa Indonesia sehari-hari, menggunakan gaya gue-lu secara wajar.
+Konteks: pengguna mungkin merasa kesepian dan ingin bercerita selama 30–60 detik.
+Aturan:
+- Mulai dengan: 'Hei, gue di sini. Gimana hari lu?'
+- Dengarkan tanpa menghakimi atau buru-buru memberi solusi.
+- Respons singkat seperti percakapan telepon sungguhan (maksimal 2 kalimat).
+- Tanyakan satu pertanyaan sederhana pada satu waktu.
+- Tanggapi hal spesifik yang benar-benar diceritakan pengguna.
+- Jangan berpura-pura menjadi manusia atau mengklaim memiliki pengalaman pribadi.
+- Jangan memaksa pengguna menceritakan hal yang tidak nyaman.
+- Jangan menggunakan respons yang terdengar seperti customer service atau chatbot formal.
+- Setelah percakapan singkat, tanyakan apakah pengguna ingin lanjut atau mengakhiri panggilan dengan baik.
+- Jika pengguna mengungkapkan risiko menyakiti diri atau bahaya langsung, tanggapi dengan empati dan bantu mereka mencari dukungan manusia yang tepat.`;
+
+    let recognition = null;
+    let synth = window.speechSynthesis;
+    let micStream = null;
+    let chatHistory = [];
+    let isAiSpeaking = false;
+    let userApiKey = localStorage.getItem('gemini_api_key') || '';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (userApiKey) {
+        document.getElementById('api-key-input').value = userApiKey;
+      }
+    });
+
+    function saveApiKey(val) {
+      userApiKey = val.trim();
+      localStorage.setItem('gemini_api_key', userApiKey);
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    async function answerCall() {
+      if (!userApiKey) {
+        alert('Masukkan Gemini API Key kamu terlebih dahulu ya!');
+        return;
+      }
+
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        alert('Izin mikrofon dibutuhkan untuk memulai percakapan.');
+        return;
+      }
+
+      showScreen('screen-active');
+      setupSpeechRecognition();
+
+      chatHistory = [];
+      const initialGreeting = "Hei, gue di sini. Gimana hari lu?";
+      chatHistory.push({ role: "model", parts: [{ text: initialGreeting }] });
+      speakText(initialGreeting);
+    }
+
+    function setupSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Browser HP kamu belum mendukung Web Speech API. Gunakan Google Chrome di Android.');
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = 'id-ID';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        if (!isAiSpeaking) {
+          document.getElementById('active-status').innerText = "Mendengarkan kamu...";
+        }
+      };
+
+      recognition.onresult = async (event) => {
+        const userText = event.results[0][0].transcript;
+        if (!userText.trim()) return;
+
+        document.getElementById('active-status').innerText = "Memproses...";
+        chatHistory.push({ role: "user", parts: [{ text: userText }] });
+
+        const aiResponseText = await callGemini(chatHistory);
+        chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+
+        speakText(aiResponseText);
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error !== 'no-speech' && !isAiSpeaking) {
+          document.getElementById('active-status').innerText = "Coba bicara lagi ya...";
+        }
+      };
+
+      recognition.onend = () => {
+        if (!isAiSpeaking && document.getElementById('screen-active').classList.contains('active')) {
+          try { recognition.start(); } catch (e) {}
+        }
+      };
+    }
+
+    async function callGemini(history) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${userApiKey}`;
+      
+      const payload = {
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: history
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          return data.candidates[0].content.parts[0].text.trim();
+        }
+        return "Sori, suaranya agak terputus. Gimana tadi?";
+      } catch (err) {
+        return "Sinyalnya agak terganggu nih, coba cerita lagi ya.";
+      }
+    }
+
+    function speakText(text) {
+      isAiSpeaking = true;
+      if (recognition) recognition.stop();
+      if (synth.speaking) synth.cancel();
+
+      document.getElementById('active-status').innerText = "Someone Who Listens sedang bicara...";
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.95;
+
+      utterance.onend = () => {
+        isAiSpeaking = false;
+        if (document.getElementById('screen-active').classList.contains('active')) {
+          document.getElementById('active-status').innerText = "Mendengarkan kamu...";
+          try { recognition.start(); } catch (e) {}
+        }
+      };
+
+      utterance.onerror = () => {
+        isAiSpeaking = false;
+        if (document.getElementById('screen-active').classList.contains('active')) {
+          try { recognition.start(); } catch (e) {}
+        }
+      };
+
+      synth.speak(utterance);
+    }
+
+    function endCall() {
+      if (synth) synth.cancel();
+
+      if (recognition) {
+        recognition.onend = null;
+        recognition.stop();
+      }
+
+      if (micStream) {
+        micStream.getTracks().forEach(track => track.stop());
+        micStream = null;
+      }
+
+      showScreen('screen-end');
+    }
+
+    function restartCall() {
+      showScreen('screen-incoming');
+    }
+  </script>
+</body>
+</html>
